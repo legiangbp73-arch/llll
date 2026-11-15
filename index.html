@@ -1,0 +1,771 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Dấu ấn tri ân – 20/11</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Playfair+Display:ital,wght@0,600;0,800;1,500&display=swap&subset=vietnamese"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --sky: #4d9ad8;
+        --peach: #f7b894;
+        --gold: #ffd98a;
+        --paper: #fbf1e1;
+        --ink: #5a2f22;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+        background: #1b1410;
+        color: #fff4e6;
+        font-family: "Playfair Display", Georgia, serif;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+
+      /* nền mờ theo ảnh đang xem */
+      .bg {
+        position: fixed;
+        inset: 0;
+        background: #1b1410;
+      }
+      .bgi {
+        position: absolute;
+        inset: -6%;
+        background-size: cover;
+        background-position: center;
+        filter: blur(32px) brightness(0.42) saturate(1.25);
+        opacity: 0;
+        transition: opacity 1.1s ease;
+      }
+      .bgi.on {
+        opacity: 1;
+      }
+
+      .stage {
+        position: relative;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 26px;
+        padding-top: max(0px, env(safe-area-inset-top));
+      }
+      .title {
+        font:
+          600 clamp(22px, 3.2vw, 46px)/1 "Dancing Script",
+          cursive;
+        color: var(--gold);
+        text-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
+        text-align: center;
+      }
+
+      /* sách */
+      .book {
+        position: relative;
+        touch-action: none;
+        cursor: grab;
+        will-change: transform;
+      }
+      .book:active {
+        cursor: grabbing;
+      }
+      .leaf {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        width: 50%;
+        height: 100%;
+        transform-origin: 0 50%;
+        transform-style: preserve-3d;
+        will-change: transform;
+      }
+      .face {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        background: var(--paper);
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        container-type: inline-size;
+        box-shadow: 0 18px 32px -14px rgba(0, 0, 0, 0.6);
+      }
+      .face.back {
+        transform: rotateY(180deg);
+      }
+      .face img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        pointer-events: none;
+      }
+      .spine,
+      .shade {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      .front .spine {
+        background: linear-gradient(
+          to right,
+          rgba(0, 0, 0, 0.38),
+          rgba(0, 0, 0, 0.08) 5%,
+          transparent 11%
+        );
+      }
+      .back .spine {
+        background: linear-gradient(
+          to left,
+          rgba(0, 0, 0, 0.38),
+          rgba(0, 0, 0, 0.08) 5%,
+          transparent 11%
+        );
+      }
+      .shade {
+        background: #1b0f08;
+        opacity: 0;
+      }
+      .missing {
+        background: #efe3d1;
+      }
+      .missing::before {
+        content: "Chưa có ảnh " attr(data-n);
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        font-size: 3cqw;
+        color: #9b7a63;
+      }
+
+      /* bìa, trang cảm ơn, bìa sau */
+      .cover,
+      .thanks,
+      .backc {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+      .cover {
+        color: #fff;
+        background:
+          radial-gradient(
+            circle at 80% 19%,
+            var(--gold) 0 5.5cqw,
+            transparent 6cqw
+          ),
+          linear-gradient(165deg, #4d9ad8 0%, #86c0e6 48%, var(--peach) 100%);
+      }
+      .cover::before {
+        content: "";
+        position: absolute;
+        inset: 3cqw;
+        border: 0.8cqw dotted rgba(255, 244, 230, 0.9);
+        border-radius: 1.6cqw;
+      }
+      .cover .q {
+        font:
+          italic 500 2.5cqw "Playfair Display",
+          serif;
+        margin-bottom: 1.2cqw;
+      }
+      .cover h1 {
+        font:
+          600 12.5cqw/0.92 "Dancing Script",
+          cursive;
+        color: #fff4e6;
+        text-shadow: 0 0.5cqw 1.8cqw rgba(60, 30, 20, 0.3);
+      }
+      .cover .s {
+        font:
+          800 3.6cqw "Playfair Display",
+          serif;
+        color: #ffe6d2;
+        margin-top: 2cqw;
+        letter-spacing: 0.2cqw;
+      }
+      .cover .d {
+        margin-top: 1.6cqw;
+        padding: 0.7cqw 3cqw;
+        border-radius: 99px;
+        background: rgba(255, 255, 255, 0.22);
+        font:
+          600 2.6cqw "Playfair Display",
+          serif;
+      }
+      .thanks {
+        background: linear-gradient(135deg, #fff6e8, #fbddc6);
+        color: var(--ink);
+        padding: 6cqw;
+      }
+      .thanks h2 {
+        font:
+          600 10.5cqw/1 "Dancing Script",
+          cursive;
+      }
+      .thanks p {
+        font:
+          italic 500 2.5cqw/1.55 "Playfair Display",
+          serif;
+        margin-top: 2.4cqw;
+        max-width: 34cqw;
+      }
+      .backc {
+        background: linear-gradient(160deg, var(--peach), #e58a63);
+        color: #fff4e6;
+      }
+      .backc b {
+        font:
+          600 9cqw/1 "Dancing Script",
+          cursive;
+      }
+      .backc span {
+        font:
+          italic 500 2.3cqw "Playfair Display",
+          serif;
+        margin-top: 1.5cqw;
+      }
+      .paper {
+        position: absolute;
+        inset: 0;
+        background: var(--paper);
+      }
+
+      /* thanh điều khiển */
+      .bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.14);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        margin-bottom: max(0px, env(safe-area-inset-bottom));
+      }
+      .bar button {
+        width: 42px;
+        height: 42px;
+        border: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.18);
+        color: #fff4e6;
+        font-size: 20px;
+        cursor: pointer;
+        transition:
+          background 0.2s,
+          transform 0.2s;
+      }
+      .bar button:hover:not(:disabled) {
+        background: rgba(255, 217, 138, 0.45);
+      }
+      .bar button:active:not(:disabled) {
+        transform: scale(0.92);
+      }
+      .bar button:disabled {
+        opacity: 0.3;
+        cursor: default;
+      }
+      .bar button:focus-visible {
+        outline: 2px solid var(--gold);
+        outline-offset: 2px;
+      }
+      .bar button.on {
+        background: var(--gold);
+        color: var(--ink);
+      }
+      .bar button.muted {
+        opacity: 0.55;
+        text-decoration: line-through;
+      }
+      .bar #label {
+        min-width: clamp(120px, 22vw, 200px);
+        text-align: center;
+        font-size: 15px;
+      }
+      .hint {
+        position: fixed;
+        bottom: 12px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font:
+          italic 14px "Playfair Display",
+          serif;
+        opacity: 0.75;
+        transition: opacity 1s;
+        pointer-events: none;
+      }
+      .hint.off {
+        opacity: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg" id="bg"></div>
+    <main class="stage">
+      <div class="title">Dấu ấn tri ân – 20/11</div>
+      <div class="book" id="book"></div>
+      <div class="bar">
+        <button id="prev" aria-label="Trang trước">‹</button>
+        <span id="label"></span>
+        <button id="next" aria-label="Trang sau">›</button>
+        <button id="mute" aria-label="Tắt nhạc" title="Bật / tắt nhạc nền (M)">
+          ♪
+        </button>
+        <button id="play" aria-label="Tự động lật" title="Tự động lật trang">
+          ▶
+        </button>
+        <button id="full" aria-label="Toàn màn hình" title="Toàn màn hình (F)">
+          ⛶
+        </button>
+      </div>
+    </main>
+    <p class="hint" id="hint">Nhấn vào trang, kéo để lật, hoặc dùng phím ← →</p>
+
+    <script>
+      (() => {
+        /* ====== CẤU HÌNH ====== */
+        const CONFIG = {
+          total: 23, // số lượng ảnh
+          image: (i) => `images/${i}.jpg`, // đường dẫn ảnh: images/1.jpg ... images/23.jpg
+          flipMs: 1250, // thời gian lật 1 trang
+          autoplayMs: 5500, // thời gian giữa 2 lần lật khi tự động
+          music: "audio/nhac-nen.mp3", // file nhạc nền (lặp lại liên tục)
+          musicVolume: 0.5, // âm lượng nhạc nền 0 → 1
+          flipSound: true, // âm thanh sột soạt khi lật trang
+        };
+
+        const $ = (id) => document.getElementById(id);
+        const book = $("book"),
+          bg = $("bg"),
+          label = $("label"),
+          hint = $("hint");
+        const prevB = $("prev"),
+          nextB = $("next"),
+          playB = $("play"),
+          fullB = $("full"),
+          muteB = $("mute");
+        const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+        /* ====== CÁC MẶT GIẤY: bìa, ảnh 1..N, trang cảm ơn, bìa sau ====== */
+        const faces = [{ t: "cover" }];
+        for (let i = 1; i <= CONFIG.total; i++)
+          faces.push({ t: "photo", n: i });
+        faces.push({ t: "thanks" });
+        if ((faces.length + 1) % 2) faces.push({ t: "blank" });
+        faces.push({ t: "back" });
+        const N = faces.length / 2; // số tờ giấy (mỗi tờ có 2 mặt)
+
+        const HTML = {
+          cover: `<div class="cover"><div class="q">“Hiền tài là nguyên khí quốc gia”</div><h1>Dấu ấn<br>tri ân</h1><div class="s">Ngày Nhà giáo Việt Nam</div><div class="d">20 / 11</div></div>`,
+          thanks: `<div class="thanks"><h2>Cảm ơn thầy cô</h2><p>Học trò kính chúc thầy cô luôn mạnh khỏe, hạnh phúc và mãi là người lái đò tận tâm.</p></div>`,
+          back: `<div class="backc"><b>Tri ân</b><span>Hiền tài là nguyên khí quốc gia</span></div>`,
+          blank: `<div class="paper"></div>`,
+        };
+
+        function makeFace(f, side) {
+          const d = document.createElement("div");
+          d.className = "face " + side;
+          if (f.t === "photo") {
+            const img = new Image();
+            img.alt = "Ảnh " + f.n;
+            img.draggable = false;
+            img.decoding = "async";
+            img.dataset.src = CONFIG.image(f.n);
+            img.onerror = () => {
+              img.remove();
+              d.classList.add("missing");
+            };
+            d.dataset.n = f.n;
+            d.appendChild(img);
+          } else d.insertAdjacentHTML("beforeend", HTML[f.t]);
+          d.insertAdjacentHTML(
+            "beforeend",
+            '<i class="spine"></i><i class="shade"></i>',
+          );
+          return d;
+        }
+
+        const leaves = [];
+        for (let i = 0; i < N; i++) {
+          const el = document.createElement("div");
+          el.className = "leaf";
+          const f = makeFace(faces[2 * i], "front"),
+            b = makeFace(faces[2 * i + 1], "back");
+          el.append(f, b);
+          book.appendChild(el);
+          leaves.push({
+            el,
+            fs: f.querySelector(".shade"),
+            bs: b.querySelector(".shade"),
+            p: 0,
+            raf: 0,
+          });
+        }
+
+        /* ====== TRẠNG THÁI + RENDER ====== */
+        let cur = 0; // số tờ đã lật sang trái
+
+        function render() {
+          const W = book.clientWidth,
+            pw = W / 2;
+          for (let i = 0; i < N; i++) {
+            const L = leaves[i],
+              p = L.p;
+            L.el.style.transform = `translateZ(${(Math.sin(Math.PI * p) * pw * 0.05).toFixed(2)}px) rotateY(${(-180 * p).toFixed(3)}deg)`;
+            L.el.style.zIndex = p < 0.5 ? N - i : i + 1;
+            L.el.style.display =
+              Math.abs(i - cur + 0.5) > 3.5 && (p === 0 || p === 1)
+                ? "none"
+                : "";
+            L.fs.style.opacity = Math.min(0.45, p * 0.9);
+            L.bs.style.opacity = Math.min(0.45, (1 - p) * 0.9);
+          }
+          // sách đóng: bìa nằm giữa màn hình; mở ra thì dịch dần về giữa
+          const shift = -0.25 * (1 - leaves[0].p) + 0.25 * leaves[N - 1].p;
+          book.style.transform = `translateX(${(shift * W).toFixed(1)}px)`;
+        }
+
+        function layout() {
+          const vw = innerWidth,
+            vh = innerHeight;
+          const pw = Math.max(100, Math.min(vw * 0.48, ((vh - 190) * 16) / 9));
+          book.style.width = pw * 2 + "px";
+          book.style.height = (pw * 9) / 16 + "px";
+          book.style.perspective = pw * 3.2 + "px";
+          if (vh > vw)
+            hint.textContent = "Xoay ngang điện thoại để xem ảnh rõ hơn";
+          render();
+        }
+
+        const ease = (t) => -(Math.cos(Math.PI * t) - 1) / 2;
+        function animate(L, to, dur = CONFIG.flipMs) {
+          cancelAnimationFrame(L.raf);
+          const from = L.p,
+            D = Math.max(320, dur * Math.abs(to - from));
+          let t0 = null;
+          const step = (now) => {
+            if (t0 === null) t0 = now;
+            const t = Math.min(1, (now - t0) / D);
+            L.p = from + (to - from) * ease(t);
+            render();
+            if (t < 1) L.raf = requestAnimationFrame(step);
+            else {
+              L.p = to;
+              render();
+            }
+          };
+          L.raf = requestAnimationFrame(step);
+        }
+
+        /* ====== ẢNH: chỉ tải các tờ gần trang đang xem ====== */
+        function ensure(i) {
+          if (i < 0 || i >= N) return;
+          leaves[i].el.querySelectorAll("img[data-src]").forEach((im) => {
+            if (!im.getAttribute("src")) im.src = im.dataset.src;
+          });
+        }
+
+        let bgKey = null;
+        function setBg(src) {
+          if (!src || src === bgKey) return;
+          bgKey = src;
+          const d = document.createElement("div");
+          d.className = "bgi";
+          d.style.backgroundImage = `url("${src}")`;
+          bg.appendChild(d);
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => d.classList.add("on")),
+          );
+          setTimeout(() => {
+            while (bg.children.length > 1) bg.removeChild(bg.firstChild);
+          }, 1300);
+        }
+
+        function updateUI() {
+          for (let i = cur - 3; i <= cur + 3; i++) ensure(i);
+          const ph = (x) =>
+            faces[x] && faces[x].t === "photo" ? faces[x].n : null;
+          const a = ph(2 * cur - 1),
+            b = ph(2 * cur);
+          label.textContent =
+            cur === 0
+              ? "Bìa sách – nhấn để mở"
+              : cur === N
+                ? "Cảm ơn thầy cô ♥"
+                : a && b
+                  ? `Ảnh ${a} – ${b} / ${CONFIG.total}`
+                  : `Ảnh ${a || b} / ${CONFIG.total}`;
+          prevB.disabled = cur <= 0;
+          nextB.disabled = cur >= N;
+          const n = b || a;
+          if (n) setBg(CONFIG.image(n));
+        }
+
+        /* ====== ÂM THANH: nhạc nền + tiếng lật trang ====== */
+        const music = new Audio(CONFIG.music);
+        music.loop = true;
+        music.preload = "auto";
+        music.volume = 0;
+        let muted = false,
+          started = false,
+          fadeRaf = 0;
+
+        function fadeTo(v, ms = 1200) {
+          cancelAnimationFrame(fadeRaf);
+          const v0 = music.volume,
+            t0 = performance.now();
+          const s = (now) => {
+            const t = Math.min(1, (now - t0) / ms);
+            music.volume = clamp(v0 + (v - v0) * t, 0, 1);
+            if (t < 1) fadeRaf = requestAnimationFrame(s);
+            else if (v === 0) music.pause();
+          };
+          fadeRaf = requestAnimationFrame(s);
+        }
+        function startMusic() {
+          if (started || muted) return;
+          music
+            .play()
+            .then(() => {
+              started = true;
+              fadeTo(CONFIG.musicVolume, 2000);
+            })
+            .catch(() => {});
+        }
+        music.addEventListener("error", () => {
+          muteB.disabled = true;
+          muteB.title = "Chưa có file " + CONFIG.music;
+        });
+
+        // trình duyệt chỉ cho phát tiếng sau khi người dùng chạm / bấm lần đầu
+        const firstGesture = (e) => {
+          if (e.target.closest && e.target.closest("#mute")) return;
+          startMusic();
+          if (started) {
+            removeEventListener("pointerdown", firstGesture, true);
+            removeEventListener("keydown", firstGesture, true);
+          }
+        };
+        addEventListener("pointerdown", firstGesture, true);
+        addEventListener("keydown", firstGesture, true);
+
+        muteB.onclick = () => {
+          muted = !muted;
+          muteB.classList.toggle("muted", muted);
+          muteB.setAttribute("aria-label", muted ? "Bật nhạc" : "Tắt nhạc");
+          if (muted) fadeTo(0, 500);
+          else if (started) {
+            music.play().catch(() => {});
+            fadeTo(CONFIG.musicVolume, 800);
+          } else startMusic();
+        };
+        document.addEventListener("visibilitychange", () => {
+          if (!started || muted) return;
+          document.hidden ? music.pause() : music.play().catch(() => {});
+        });
+
+        // tiếng giấy sột soạt: tạo bằng WebAudio nên không cần file
+        let ac = null;
+        function flipSound() {
+          if (muted || !CONFIG.flipSound) return;
+          try {
+            ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+            if (ac.state === "suspended") ac.resume();
+            const dur = 0.38,
+              n = (ac.sampleRate * dur) | 0,
+              buf = ac.createBuffer(1, n, ac.sampleRate),
+              d = buf.getChannelData(0);
+            for (let i = 0; i < n; i++) {
+              const t = i / n;
+              d[i] =
+                (Math.random() * 2 - 1) * Math.sin(Math.PI * t) * (1 - t * 0.4);
+            }
+            const src = ac.createBufferSource();
+            src.buffer = buf;
+            const f = ac.createBiquadFilter();
+            f.type = "bandpass";
+            f.Q.value = 0.8;
+            f.frequency.setValueAtTime(900, ac.currentTime);
+            f.frequency.exponentialRampToValueAtTime(
+              3200,
+              ac.currentTime + dur,
+            );
+            const g = ac.createGain();
+            g.gain.value = 0.22;
+            src.connect(f).connect(g).connect(ac.destination);
+            src.start();
+          } catch (e) {}
+        }
+
+        /* ====== ĐIỀU HƯỚNG ====== */
+        function next() {
+          if (cur >= N) return;
+          const L = leaves[cur++];
+          flipSound();
+          animate(L, 1);
+          updateUI();
+          bump();
+        }
+        function prev() {
+          if (cur <= 0) return;
+          const L = leaves[--cur];
+          flipSound();
+          animate(L, 0);
+          updateUI();
+          bump();
+        }
+        function goTo(n) {
+          n = clamp(n, 0, N);
+          if (n === cur) return;
+          const step = clamp(1400 / Math.abs(n - cur), 60, 140);
+          if (n > cur)
+            for (let k = cur, d = 0; k < n; k++, d += step) {
+              ensure(k);
+              const L = leaves[k];
+              setTimeout(() => {
+                if (d === 0) flipSound();
+                animate(L, 1, 950);
+              }, d);
+            }
+          else
+            for (let k = cur - 1, d = 0; k >= n; k--, d += step) {
+              ensure(k);
+              const L = leaves[k];
+              setTimeout(() => {
+                if (d === 0) flipSound();
+                animate(L, 0, 950);
+              }, d);
+            }
+          cur = n;
+          updateUI();
+          bump();
+        }
+
+        /* kéo / nhấn trực tiếp lên sách */
+        let drag = null;
+        book.addEventListener("pointerdown", (e) => {
+          if (e.button > 0) return;
+          hint.classList.add("off");
+          const r = book.getBoundingClientRect(),
+            dir = e.clientX > r.left + r.width / 2 ? 1 : -1;
+          if ((dir > 0 && cur >= N) || (dir < 0 && cur <= 0)) return;
+          drag = {
+            dir,
+            L: dir > 0 ? leaves[cur] : leaves[cur - 1],
+            x0: e.clientX,
+            moved: false,
+          };
+          book.setPointerCapture(e.pointerId);
+        });
+        book.addEventListener("pointermove", (e) => {
+          if (!drag) return;
+          const dx = e.clientX - drag.x0,
+            pw = book.clientWidth / 2;
+          if (!drag.moved && Math.abs(dx) < 8) return;
+          drag.moved = true;
+          cancelAnimationFrame(drag.L.raf);
+          drag.L.p =
+            drag.dir > 0 ? clamp(-dx / pw, 0, 1) : clamp(1 - dx / pw, 0, 1);
+          render();
+        });
+        const endDrag = () => {
+          if (!drag) return;
+          const d = drag;
+          drag = null;
+          if (!d.moved) {
+            d.dir > 0 ? next() : prev();
+            return;
+          }
+          if (d.dir > 0) {
+            if (d.L.p > 0.3) {
+              cur++;
+              flipSound();
+              animate(d.L, 1, 800);
+            } else animate(d.L, 0, 650);
+          } else {
+            if (d.L.p < 0.7) {
+              cur--;
+              flipSound();
+              animate(d.L, 0, 800);
+            } else animate(d.L, 1, 650);
+          }
+          updateUI();
+          bump();
+        };
+        book.addEventListener("pointerup", endDrag);
+        book.addEventListener("pointercancel", endDrag);
+
+        prevB.onclick = prev;
+        nextB.onclick = next;
+        addEventListener("keydown", (e) => {
+          hint.classList.add("off");
+          const k = e.key;
+          if (k === "ArrowRight" || k === "PageDown" || k === " ") {
+            e.preventDefault();
+            next();
+          } else if (k === "ArrowLeft" || k === "PageUp") {
+            e.preventDefault();
+            prev();
+          } else if (k === "Home") goTo(0);
+          else if (k === "End") goTo(N);
+          else if (k === "f" || k === "F") toggleFull();
+          else if (k === "m" || k === "M") muteB.click();
+        });
+
+        /* tự động lật */
+        let timer = null,
+          playing = false;
+        function bump() {
+          clearInterval(timer);
+          if (playing)
+            timer = setInterval(
+              () => (cur >= N ? goTo(0) : next()),
+              CONFIG.autoplayMs,
+            );
+        }
+        playB.onclick = () => {
+          playing = !playing;
+          playB.classList.toggle("on", playing);
+          playB.textContent = playing ? "❚❚" : "▶";
+          bump();
+          if (playing && cur === 0) next();
+        };
+
+        function toggleFull() {
+          document.fullscreenElement
+            ? document.exitFullscreen()
+            : document.documentElement.requestFullscreen?.();
+        }
+        fullB.onclick = toggleFull;
+
+        addEventListener("resize", layout);
+        layout();
+        updateUI();
+        setTimeout(() => hint.classList.add("off"), 8000);
+      })();
+    </script>
+  </body>
+</html>
